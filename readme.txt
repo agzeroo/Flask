@@ -2,6 +2,7 @@
 /
 L flask_adv         : 플라스크 고급 구조 / 프레임웍 단위 형태로 구성
 L flask_basic       : 플라스크 기본 기능 
+    L templates     : 여기에는 렌더링의 대상이 되는  html  파일이 위치한다
 L flask_cms         : 웹템플릿(디자인)을 웹 프로그램에 입히는 주제
 L readme.txt        : 설명
 
@@ -70,3 +71,16 @@ L readme.txt        : 설명
         -Django
             - 풀 스텍 에디션
             - 유사폼 <-> Spring
+
+- 개발 환경 구축
+    - 가상환경 생성
+    - 가상환경 활성화
+    - 필요모듈 설치
+        - $ pip install flask`
+    - VS code 상에서 모듈을 설치해도 인식을 못한다면
+        - F1 (ctrl + shift + p)
+        - python select Interpreter
+            - 모듈이 셜치된 가상환경 선택
+ 
+
+    
