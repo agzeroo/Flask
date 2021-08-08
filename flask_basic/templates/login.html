@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+  <head> </head>
+  <body>
+    <fieldset>
+      <!-- 
+                action : 데이터를 보낼 서버측 주소 (URL )
+                         만약 생략되었다면 현재 페이지 주소로 전달
+            -->
+      <form method="POST">
+        <!-- 데이터를 서버로 보낼때, 각각 구분하기 위해서 데이터 각가에 
+                    키를 지정해 준다 => name 속성 담당
+                     종료태그가 없는 엘리먼트는 단독태그 형태로 표현 => <input .../>
+                -->
+        <input type="text" name="uid" placeholder="아이디 입력" required />
+        <input type="password" name="upw" placeholder="비밀번호" required />
+        <input type="submit" value="로그인" />
+      </form>
+    </fieldset>
+    <script></script>
+  </body>
+</html>

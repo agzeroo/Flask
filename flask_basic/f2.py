@@ -1,14 +1,12 @@
-# 기본으로 깔고 시작#
+# 기본 템플릿
 from flask import Flask
 
-
-print(__name__)
 app = Flask(__name__)
 
 
 @app.route('/')
 def home():
-    return 'home page 3'
+    return 'home page'
 
 
 if __name__ == '__main__':

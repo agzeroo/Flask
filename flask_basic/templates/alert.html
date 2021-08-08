@@ -1,0 +1,23 @@
+<!--
+    클라이언트 기준에서
+    자바스크립트(css)를 html에 포함되는 방법
+    - external
+        - js가 html 바깥에 존재한다. *.js, *.css
+        - 외부 링크를 연결해서 포함시킨다
+    - internal
+        - js가 html 내부에 존재한다
+        - <script> ...자바스크립트 코드...   </script>
+        - <style> ...css 코드...   </style>
+        - 통상  위치는 </body> 직전에 위치시키면 로드상에 오류는 없다
+        - html 이 메모리에 로드되고 나서 엑세스해야 안전정으로 구동된다
+    - inline
+        - html 태그에 존재
+        - <a onclick="javascript:call();" style="color:red;">클릭</a>
+-->
+<script>
+  // 팝업, 경고창 알림
+  alert("{{ msg }}");
+  // 이전 페이지 이동
+  // 자바스크립트 내장객체 활용
+  history.back();
+</script>

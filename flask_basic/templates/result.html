@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+  <head> </head>
+  <body>
+    <!-- 원본사진 -->
+    <!--- 총평 -->
+    <div>
+      <table border="1" cellsapcing="">
+        <thead>
+          <tr>
+            <th>원본사진</th>
+            <th>총평</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><img src="{{ path }}" width="200" /></td>
+            <td>{{ predict.get("msg") }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </body>
+</html>

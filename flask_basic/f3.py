@@ -7,14 +7,11 @@
 # flask나 Django는  SSR 구현하기 위해서 템플릿 엔진을 사용 -> Jinja
 # https://jinja.palletsprojects.com/en/3.0.x/
 
-# html 파일들은 엔트리포인트 기준으로 경로법을 따진다.
-# /templates/*.html 이렇게 위치한다.
-# templates 이라는 폴더명은 blueprint에서 변경 가능하다.
-
+# html 파일들은 엔트리포인트 기준으로 경로법을 따진다
+# /templates/*.html 이렇게 위치한다
+# templates 이라는 폴더명은 blueprint에서 변경 가능하다. 여기서는 고정으로 사용
 from flask import Flask, render_template
 
-
-print(__name__)
 app = Flask(__name__)
 
 
