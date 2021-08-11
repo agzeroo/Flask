@@ -9,8 +9,8 @@
                 </div><!-- /.col -->
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-right">
-                        <li class="breadcrumb-item"><a href="#">Home</a></li>
-                        <li class="breadcrumb-item active">FORM 업로드</li>
+                        <li class="breadcrumb-item"><a href="#">Dashboard</a></li>
+                        <li class="breadcrumb-item active">웹캡 캡쳐 후 업로드</li>
                     </ol>
                 </div><!-- /.col -->
             </div><!-- /.row -->
@@ -20,13 +20,348 @@
 
     <!-- Main content -->
     <section class="content">
-        <div class="container-fluid">
-            
-            <div class="row">
-                {# 상세 요구사항 구현 #}
+
+        <!-- Default box -->
+        <div class="card card-solid">
+            <div class="card-body">
+                <div class="row">
+                    <style>
+                        #videoElement, #mirrored {
+                            width: 100%;
+                            height: 375px;
+                            background-color: #666;
+                            display: inline-block;
+                        }
+                    </style>
+                    <div class="col-md-6">
+                        <div class="card card-primary">
+                            <div class="card-header">
+                                <h3 class="card-title">비디오</h3>
+                            </div>
+                            <video autoplay="true" id="videoElement"></video>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card card-primary">
+                            <div class="card-header">
+                                <h3 class="card-title">캔버스</h3>
+                            </div>
+                            {# 캔버스는 웹캠으로 나온 화면을 캡쳐하기 위해서는 캔버스에
+                               그려야 한다 그 용도. 화면에는 숨김 #}
+                            <canvas class="canvas" id="mirrored" style="display:none;"></canvas>
+
+                            {# 웹캠으로 보이는 화면을 캡쳐 하는 이벤트 발동 #}
+                            <button onclick="onSnapshot();">캡쳐 및 업로드</button>
+                            
+                            {# 갭쳐한 사진이 여기로 보인다 #}
+                            <img id="snapshot"/>
+                        </div>
+                    </div>
+                    
+                    <script>
+                        // DOM이 화면에 뜨면(브라우저가 화면에 뭔가를 그리면 호출)
+                        document.addEventListener("DOMContentLoaded", () => {
+                            // 웹캠 객체를 만든다
+                            new WebCam();
+                        })
+                        class WebCam 
+                        {
+                            // 생성자
+                            constructor() {
+                                // 순수 JS로 html을 특정하는 함수 
+                                // video 태그 특정
+                                const video = document.querySelector("#videoElement");
+                                // 웹캠 체크
+                                // 비디오 태그에 웹캠으로 통해 들어온 영상을 세팅한다
+                                if (navigator.mediaDevices.getUserMedia) {
+                                    // 웹캠을 통해서 리소스를 받는데, 비디오 OK, 오디오 X
+                                    navigator.mediaDevices.getUserMedia({ video: true, audio:false })
+                                    .then((stream) => { // function 의 this와 화살표 함수의 this 가 다름
+                                        // 비디오에 스트리밍 소스 세팅
+                                        video.srcObject = stream;
+                                    })
+                                    .catch(function (error) {
+                                        console.log("Something went wrong!");
+                                        console.log(error);
+                                        return;
+                                    });
+                                }
+                                // 비디오 태그에 영상이 들어왔다면 -> 메타 정보가 로드 -> 이벤트 감지
+                                video.addEventListener("loadedmetadata", () => {
+                                    console.log('갱신 이벤트')
+                                    // 브라우저에서는 화면을 갱신할 때 마다 이 함수에 우리가 넣어준 콜백함수를 실행시켜준다.
+                                    // draw() 호출
+                                    window.requestAnimationFrame(this.draw.bind(this));
+                                });
+                            }
+                            
+                            // 캔버스에 그리는 함수
+                            draw(t) {
+                                console.log('화면 갱신')
+                                // 재귀적으로 다시 requestAnimationFrame을 호출  
+                                window.requestAnimationFrame(this.draw.bind(this));
+                                
+                                // 캔벅스 획득
+                                const canvas    = document.querySelector("#mirrored");
+                                // 비디오 획득
+                                const video     = document.querySelector("#videoElement");
+                                // 비디오에서 가로 세로 크기 획득
+                                canvas.width    = video.videoWidth;
+                                canvas.height   = video.videoHeight;
+                                
+                                // 그리는 도구를 2d로 획득
+                                const ctx       = canvas.getContext('2d');
+                                
+                                // 좌우 뒤집는 코드
+                                //ctx.translate(video.videoWidth, 0);
+                                //ctx.scale(-1, 1);
+                                // 그린다 -> 비디오를 그린다
+                                ctx.drawImage(video, 0, 0,
+                                    video.videoWidth,
+                                    video.videoHeight);
+
+                            }
+                        }
+                        function onSnapshot () 
+                        {
+                            console.log('호출')
+                            // 캔버스 획득
+                            const canvas    = document.querySelector("#mirrored");
+                            // 캔버스로 부터 이미지 획득
+                            const data      = canvas.toDataURL('image/jepg');
+                            // 캡쳐한 이미지를 화면에 표시 (img 태그에 세팅)
+                            document.querySelector("#snapshot").src = data;
+                            
+                            // 전송
+                            // 이미지를 전송할수 있은 형태로 변경
+                            canvas.toBlob( (blob) => {
+                                // 전송할 데이터 세팅
+                                const formData = new FormData();
+                                // 파일명을 임의로 세팅
+                                formData.append('file', blob, 'filename.png');
+
+                                $.post({
+                                    url: '/ajaxUpload',
+                                    processData: false,
+                                    contentType: false,
+                                    data: formData,
+                                    success: res => {
+                                        console.log(res);
+                                        $('#mask_img').empty();
+                                        let html = `
+                                            <img src="${res.path}" class="product-image" alt="Product Image"/>
+                                        `
+                                        $('#mask_img').append(html);
+                                        $('#predict').empty();
+                                        $('#predict').append(res.msg);
+                                    },
+                                    error: err => {
+                                        alert(err);
+                                    }
+                                })
+                            });
+                        }
+                        // function paintToCanvas()
+                        // {
+
+                        // }
+                        // function getVideo () {
+                        //     console.log('호출');
+                        //     navigator.mediaDevices.getUserMedia( {video:true, audio:false})
+                        //     .then( stream => {
+                        //         console.log('성공', stream);
+                        //         $('video').srcObject = stream;
+                        //         $('video').play();
+                        //     })
+                        //     .catch( err => {
+                        //         console.log('err', err);
+                        //     })
+                        // }
+                        // getVideo();
+                    </script>
+                </div>
+                
+                <div class="row">
+                    <div class="col-12 col-sm-6">
+                        <h3 class="d-inline-block d-sm-none">LOWA Men’s Renegade GTX Mid Hiking Boots Review</h3>
+                        <div class="col-12" id="mask_img">
+
+                        </div>
+                        <div class="col-12 product-image-thumbs">
+                            <div class="product-image-thumb active"><img src="/static/dist/img/prod-1.jpg"
+                                    alt="Product Image"></div>
+                            <div class="product-image-thumb"><img src="/static/dist/img/prod-2.jpg" alt="Product Image">
+                            </div>
+                            <div class="product-image-thumb"><img src="/static/dist/img/prod-3.jpg" alt="Product Image">
+                            </div>
+                            <div class="product-image-thumb"><img src="/static/dist/img/prod-4.jpg" alt="Product Image">
+                            </div>
+                            <div class="product-image-thumb"><img src="/static/dist/img/prod-5.jpg" alt="Product Image">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-sm-6">
+                        <h3 class="my-3">LOWA Men’s Renegade GTX Mid Hiking Boots Review</h3>
+                        <p id="predict">
+                        </p>
+
+                        <hr>
+                        <h4>Available Colors</h4>
+                        <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                            <label class="btn btn-default text-center active">
+                                <input type="radio" name="color_option" id="color_option_a1" autocomplete="off"
+                                    checked="">
+                                Green
+                                <br>
+                                <i class="fas fa-circle fa-2x text-green"></i>
+                            </label>
+                            <label class="btn btn-default text-center">
+                                <input type="radio" name="color_option" id="color_option_a2" autocomplete="off">
+                                Blue
+                                <br>
+                                <i class="fas fa-circle fa-2x text-blue"></i>
+                            </label>
+                            <label class="btn btn-default text-center">
+                                <input type="radio" name="color_option" id="color_option_a3" autocomplete="off">
+                                Purple
+                                <br>
+                                <i class="fas fa-circle fa-2x text-purple"></i>
+                            </label>
+                            <label class="btn btn-default text-center">
+                                <input type="radio" name="color_option" id="color_option_a4" autocomplete="off">
+                                Red
+                                <br>
+                                <i class="fas fa-circle fa-2x text-red"></i>
+                            </label>
+                            <label class="btn btn-default text-center">
+                                <input type="radio" name="color_option" id="color_option_a5" autocomplete="off">
+                                Orange
+                                <br>
+                                <i class="fas fa-circle fa-2x text-orange"></i>
+                            </label>
+                        </div>
+
+                        <h4 class="mt-3">Size <small>Please select one</small></h4>
+                        <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                            <label class="btn btn-default text-center">
+                                <input type="radio" name="color_option" id="color_option_b1" autocomplete="off">
+                                <span class="text-xl">S</span>
+                                <br>
+                                Small
+                            </label>
+                            <label class="btn btn-default text-center">
+                                <input type="radio" name="color_option" id="color_option_b2" autocomplete="off">
+                                <span class="text-xl">M</span>
+                                <br>
+                                Medium
+                            </label>
+                            <label class="btn btn-default text-center">
+                                <input type="radio" name="color_option" id="color_option_b3" autocomplete="off">
+                                <span class="text-xl">L</span>
+                                <br>
+                                Large
+                            </label>
+                            <label class="btn btn-default text-center">
+                                <input type="radio" name="color_option" id="color_option_b4" autocomplete="off">
+                                <span class="text-xl">XL</span>
+                                <br>
+                                Xtra-Large
+                            </label>
+                        </div>
+
+                        <div class="bg-gray py-2 px-3 mt-4">
+                            <h2 class="mb-0">
+                                $80.00
+                            </h2>
+                            <h4 class="mt-0">
+                                <small>Ex Tax: $80.00 </small>
+                            </h4>
+                        </div>
+
+                        <div class="mt-4">
+                            <div class="btn btn-primary btn-lg btn-flat">
+                                <i class="fas fa-cart-plus fa-lg mr-2"></i>
+                                Add to Cart
+                            </div>
+
+                            <div class="btn btn-default btn-lg btn-flat">
+                                <i class="fas fa-heart fa-lg mr-2"></i>
+                                Add to Wishlist
+                            </div>
+                        </div>
+
+                        <div class="mt-4 product-share">
+                            <a href="#" class="text-gray">
+                                <i class="fab fa-facebook-square fa-2x"></i>
+                            </a>
+                            <a href="#" class="text-gray">
+                                <i class="fab fa-twitter-square fa-2x"></i>
+                            </a>
+                            <a href="#" class="text-gray">
+                                <i class="fas fa-envelope-square fa-2x"></i>
+                            </a>
+                            <a href="#" class="text-gray">
+                                <i class="fas fa-rss-square fa-2x"></i>
+                            </a>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="row mt-4">
+                    <nav class="w-100">
+                        <div class="nav nav-tabs" id="product-tab" role="tablist">
+                            <a class="nav-item nav-link active" id="product-desc-tab" data-toggle="tab"
+                                href="#product-desc" role="tab" aria-controls="product-desc"
+                                aria-selected="true">Description</a>
+                            <a class="nav-item nav-link" id="product-comments-tab" data-toggle="tab"
+                                href="#product-comments" role="tab" aria-controls="product-comments"
+                                aria-selected="false">Comments</a>
+                            <a class="nav-item nav-link" id="product-rating-tab" data-toggle="tab"
+                                href="#product-rating" role="tab" aria-controls="product-rating"
+                                aria-selected="false">Rating</a>
+                        </div>
+                    </nav>
+                    <div class="tab-content p-3" id="nav-tabContent">
+                        <div class="tab-pane fade show active" id="product-desc" role="tabpanel"
+                            aria-labelledby="product-desc-tab"> Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                            Morbi vitae condimentum erat. Vestibulum ante ipsum primis in faucibus orci luctus et
+                            ultrices posuere cubilia Curae; Sed posuere, purus at efficitur hendrerit, augue elit
+                            lacinia arcu, a eleifend sem elit et nunc. Sed rutrum vestibulum est, sit amet cursus dolor
+                            fermentum vel. Suspendisse mi nibh, congue et ante et, commodo mattis lacus. Duis varius
+                            finibus purus sed venenatis. Vivamus varius metus quam, id dapibus velit mattis eu. Praesent
+                            et semper risus. Vestibulum erat erat, condimentum at elit at, bibendum placerat orci.
+                            Nullam gravida velit mauris, in pellentesque urna pellentesque viverra. Nullam non
+                            pellentesque justo, et ultricies neque. Praesent vel metus rutrum, tempus erat a, rutrum
+                            ante. Quisque interdum efficitur nunc vitae consectetur. Suspendisse venenatis, tortor non
+                            convallis interdum, urna mi molestie eros, vel tempor justo lacus ac justo. Fusce id enim a
+                            erat fringilla sollicitudin ultrices vel metus. </div>
+                        <div class="tab-pane fade" id="product-comments" role="tabpanel"
+                            aria-labelledby="product-comments-tab"> Vivamus rhoncus nisl sed venenatis luctus. Sed
+                            condimentum risus ut tortor feugiat laoreet. Suspendisse potenti. Donec et finibus sem, ut
+                            commodo lectus. Cras eget neque dignissim, placerat orci interdum, venenatis odio. Nulla
+                            turpis elit, consequat eu eros ac, consectetur fringilla urna. Duis gravida ex pulvinar
+                            mauris ornare, eget porttitor enim vulputate. Mauris hendrerit, massa nec aliquam cursus, ex
+                            elit euismod lorem, vehicula rhoncus nisl dui sit amet eros. Nulla turpis lorem, dignissim a
+                            sapien eget, ultrices venenatis dolor. Curabitur vel turpis at magna elementum hendrerit vel
+                            id dui. Curabitur a ex ullamcorper, ornare velit vel, tincidunt ipsum. </div>
+                        <div class="tab-pane fade" id="product-rating" role="tabpanel"
+                            aria-labelledby="product-rating-tab"> Cras ut ipsum ornare, aliquam ipsum non, posuere elit.
+                            In hac habitasse platea dictumst. Aenean elementum leo augue, id fermentum risus efficitur
+                            vel. Nulla iaculis malesuada scelerisque. Praesent vel ipsum felis. Ut molestie, purus
+                            aliquam placerat sollicitudin, mi ligula euismod neque, non bibendum nibh neque et erat.
+                            Etiam dignissim aliquam ligula, aliquet feugiat nibh rhoncus ut. Aliquam efficitur lacinia
+                            lacinia. Morbi ac molestie lectus, vitae hendrerit nisl. Nullam metus odio, malesuada in
+                            vehicula at, consectetur nec justo. Quisque suscipit odio velit, at accumsan urna vestibulum
+                            a. Proin dictum, urna ut varius consectetur, sapien justo porta lectus, at mollis nisi orci
+                            et nulla. Donec pellentesque tortor vel nisl commodo ullamcorper. Donec varius massa at
+                            semper posuere. Integer finibus orci vitae vehicula placerat. </div>
+                    </div>
+                </div>
             </div>
-            
-        </div><!-- /.container-fluid -->
+            <!-- /.card-body -->
+        </div>
+        <!-- /.card -->
+
     </section>
     <!-- /.content -->
 </div>
